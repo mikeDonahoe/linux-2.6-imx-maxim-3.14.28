@@ -330,7 +330,7 @@
 };
 
 &i2c2 {
-	clock-frequency = <100000>;
+	clock-frequency = <400000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
@@ -344,6 +344,78 @@
 		interrupts = <28 2>;
 		wakeup-gpios = <&gpio2 28 GPIO_ACTIVE_HIGH>;
 	};
+
+	max9286_des: max9286_des@6a { /* i2c2 driver */
+		compatible = "maxim,max9286_des";
+		reg = <0x6a>;
+		clocks = <&clks 201>;
+		clock-names = "csi_mclk";
+		DOVDD-supply = <&vgen4_reg>; /* 1.8v */
+		AVDD-supply = <&vgen3_reg>;  /* 2.8v, rev C board is VGEN3
+		//				rev B board is VGEN5 */
+		DVDD-supply = <&vgen2_reg>;  /* 1.5v*/
+		pwn-gpios = <&gpio1 19 0>;   /* active low: SD1_CLK */
+		rst-gpios = <&gpio1 20 0>;   /* active high: SD1_DAT2 */
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+		//sensor0 = <&max9271_ser_0>;
+		//sensor1 = <&max9271_ser_1>;
+		//sensor2 = <&max9271_ser_2>;
+		//sensor3 = <&max9271_ser_3>;
+	};
+
+	max9271_ser_0: max9271_ser@41 { /* i2c2 driver */
+		compatible = "maxim,max9271_ser";
+		reg = <0x41>;
+		csi_id = <0>;
+		ser_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+
+/*	max9271_ser_1: max9271_ser@42 {
+		compatible = "maxim,max9271_ser";
+		reg = <0x42>;
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+
+	max9271_ser_2: max9271_ser@43 {
+		compatible = "maxim,max9271_ser";
+		reg = <0x43>;
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+
+	max9271_ser_3: max9271_ser@44 {
+		compatible = "maxim,max9271_ser";
+		reg = <0x44>;
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+*/
+
+	ov10640_mipi_0: ov10640_mipi@31 { /* i2c2 driver */
+		compatible = "ovti,ov10640_mipi";
+		reg = <0x31>;
+		clocks = <&clks 201>;
+		clock-names = "csi_mclk";
+		//DOVDD-supply = <&vgen4_reg>; /* 1.8v */
+		//AVDD-supply = <&vgen3_reg>;  /* 2.8v, rev C board is VGEN3
+		//				rev B board is VGEN5 */
+		//DVDD-supply = <&vgen2_reg>;  /* 1.5v*/
+		//pwn-gpios = <&gpio1 19 0>;   /* active low: SD1_CLK */
+		//rst-gpios = <&gpio1 20 0>;   /* active high: SD1_DAT2 */
+		//pwn-gpios = <&max7310_a 2 0>;
+		csi_id = <0>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+	};
+
 
 	pmic: pfuze100@08 {
 		compatible = "fsl,pfuze100";
