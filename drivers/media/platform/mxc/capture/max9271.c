@@ -170,7 +170,7 @@ static int max9271_initial_setup(void)
 	//Image Sensor Initialization Procedure
 
 	//Disable auto acknowledge
-	ret = max9286_disable_auto_ack();
+	//ret = max9286_disable_auto_ack();
 
 	//Enable auto acknowledge
 	//ret = max9286_enable_auto_ack();
@@ -185,7 +185,7 @@ static int max9271_enable_serial_links(void)
 	int ret;
 
 	//Enable all serial links
-	ret = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x04, 0x83);
+	ret = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x04, 0xc3);
 	msleep(5);
 	
 	//Poll frame sync.
@@ -199,6 +199,20 @@ static int max9271_enable_serial_links(void)
 }
 EXPORT_SYMBOL(max9271_enable_serial_links);
 
+static int max9271_disable_serial_links(void)
+{
+	int ret;
+
+	//Enable auto acknowledge
+	ret = max9286_enable_auto_ack();
+
+	//Disable serial link and enable config link
+	ret = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x04, 0x43);
+
+	return 0;
+
+}
+EXPORT_SYMBOL(max9271_disable_serial_links);
 
 static int max9271_dep(void) // temp function to make dependency. To be removed.
 {
@@ -238,6 +252,18 @@ static int max9271_dump(struct i2c_client *client)
 	return 0;
 
 }
+
+static int max9271_enable_csi_output(void)
+{
+	int ret;
+
+	//Enable CSI-2 output
+	ret = max9286_enable_csi_output();
+
+	return 0;
+
+}
+EXPORT_SYMBOL(max9271_enable_csi_output);
 
 /*!
  * max9271 I2C detach function

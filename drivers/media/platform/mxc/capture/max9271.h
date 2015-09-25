@@ -41,6 +41,7 @@ static int max9286_disable_auto_ack(void);
 static int max9286_enable_auto_ack(void);
 static int max9286_enable_csi_output(void);
 static int max9286_check_frame_sync(void);
+static int max9286_reset(void);
 
 /*****************************************************************************
 * MACRO definitions

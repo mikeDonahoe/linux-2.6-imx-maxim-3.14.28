@@ -37,6 +37,8 @@
 static int max9271_dep(void);
 static int max9271_initial_setup(void);
 static int max9271_enable_serial_links(void);
+static int max9271_disable_serial_links(void);
+static int max9271_enable_csi_output(void);
 
 /*****************************************************************************
 * MACRO definitions

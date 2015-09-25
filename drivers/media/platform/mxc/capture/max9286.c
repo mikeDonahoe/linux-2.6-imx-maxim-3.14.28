@@ -64,6 +64,7 @@ static const struct i2c_device_id max9286_id[] = {
 static int max9286_read(struct i2c_client *client, u8 reg);
 static int max9286_write(struct i2c_client *client, u8 reg, char value);
 static int max9286_dump(struct i2c_client *client);
+static int max9286_reset(void);
 
 static struct i2c_board_info gOvDeserialInfo = {
 	I2C_BOARD_INFO("max9286_des", 0x6a),
@@ -107,6 +108,8 @@ static int max9286_probe(struct i2c_client *client,
 	/* Set initial values for the deserializer struct. */
 	memset(&max9286_data, 0, sizeof(max9286_data));
 	max9286_data.i2c_client = client;
+
+	max9286_reset();
 
 	//u8 chip_id_high, chip_id_low;
 
@@ -167,6 +170,33 @@ static int max9286_initial_setup(void)
 }
 EXPORT_SYMBOL(max9286_initial_setup);
 
+static int max9286_reset(void)
+{
+	int ret, i;
+
+	int reg[] = {
+	0xef,0x22,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0xd4,0xff,0xe4,0x99,0xf3,0x50,0x0b,
+	0x00,0x00,0xf4,0x0f,0xe4,0x0b,0x00,0x01,0x00,0x00,0x60,0x00,0x04,0xff,0x40,0x02,
+	0x55,0x00,0x00,0x00,0x00,0x00,0x00,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x99,0x99,0xb6,0x00,0x00,0x00,0x00,0x00,0x00,0x2e,0x24,0x54,0xc8,0x22, 
+	};
+
+	printk("Reseting max9286 registers\n");
+
+	for( i = 0; i <= 0x40; i++)
+	{
+		if((i%16) == 0)
+		{
+			printk("\n%x: ",i/16);
+		}
+		ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, i, reg[i]);
+		printk("0x%02x ", reg[i]);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(max9286_reset);
+
 static int max9286_increase_rev_amplitude(void)
 {
 	int ret;
@@ -208,8 +238,8 @@ static int max9286_enable_auto_ack(void)
 {
 	int ret;
 
-	// Disable auto acknowledge
-	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x34, 0x3B);
+	// Enable auto acknowledge
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x34, 0xB6);
 
 	return 0;
 }
@@ -220,8 +250,8 @@ static int max9286_enable_csi_output(void)
 	int ret;
 
 	// Enable CSI-2 output
-//	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x15, 0x0B);
-	msleep(5);
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x15, 0x0B);
+	msleep(10);
 
 	return 0;
 }
