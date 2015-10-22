@@ -349,7 +349,7 @@ static int mxc_v4l2_prepare_bufs(cam_data *cam, struct v4l2_buffer *buf)
 	pr_debug("In MVC:mxc_v4l2_prepare_bufs\n");
 
 	if (buf->index < 0 || buf->index >= FRAME_NUM || buf->length <
-			PAGE_ALIGN(cam->v2f.fmt.pix.sizeimage)) {
+			cam->v2f.fmt.pix.sizeimage) {
 		pr_err("ERROR: v4l2 capture: mxc_v4l2_prepare_bufs buffers "
 			"not allocated,index=%d, length=%d\n", buf->index,
 			buf->length);
@@ -452,7 +452,7 @@ static int mxc_streamon(cam_data *cam)
 		list_del(cam->ready_q.next);
 		list_add_tail(&frame->queue, &cam->working_q);
 		frame->ipu_buf_num = cam->ping_pong_csi;
-		err = cam->enc_update_eba(cam->ipu, frame->buffer.m.offset,
+		err = cam->enc_update_eba(cam, cam->ipu, frame->buffer.m.offset,
 					  &cam->ping_pong_csi);
 
 		frame =
@@ -460,7 +460,7 @@ static int mxc_streamon(cam_data *cam)
 		list_del(cam->ready_q.next);
 		list_add_tail(&frame->queue, &cam->working_q);
 		frame->ipu_buf_num = cam->ping_pong_csi;
-		err |= cam->enc_update_eba(cam->ipu, frame->buffer.m.offset,
+		err |= cam->enc_update_eba(cam, cam->ipu, frame->buffer.m.offset,
 					   &cam->ping_pong_csi);
 		spin_unlock_irqrestore(&cam->queue_int_lock, lock_flags);
 	} else {
@@ -2591,7 +2591,7 @@ next:
 					 struct mxc_v4l_frame,
 					 queue);
 		if (cam->enc_update_eba)
-			if (cam->enc_update_eba(cam->ipu,
+			if (cam->enc_update_eba(cam, cam->ipu,
 						ready_frame->buffer.m.offset,
 						&cam->ping_pong_csi) == 0) {
 				list_del(cam->ready_q.next);
@@ -2601,7 +2601,7 @@ next:
 			}
 	} else {
 		if (cam->enc_update_eba)
-			cam->enc_update_eba(
+			cam->enc_update_eba(cam,
 				cam->ipu, cam->dummy_frame.buffer.m.offset,
 				&cam->ping_pong_csi);
 	}
@@ -2747,7 +2747,10 @@ static int init_camera_struct(cam_data *cam, struct platform_device *pdev)
 
 	cam->self = kmalloc(sizeof(struct v4l2_int_device), GFP_KERNEL);
 	cam->self->module = THIS_MODULE;
-	sprintf(cam->self->name, "mxc_v4l2_cap%d", cam->csi);
+	if (cam->ipu_id == 0)
+		sprintf(cam->self->name, "mxc_v4l2_cap%d", cam->csi);
+	else
+		sprintf(cam->self->name, "mxc_v4l2_cap%d", cam->csi + 2);
 	cam->self->type = v4l2_int_type_master;
 	cam->self->u.master = &mxc_v4l2_master;
 
@@ -3009,12 +3012,19 @@ static int mxc_v4l2_master_attach(struct v4l2_int_device *slave)
 		return -1;
 	}
 
+	if (sdata->ipu_id != cam->ipu_id) {
+		pr_debug("%s: ipu_id doesn't match\n", __func__);
+		return -1;
+	}
+
 	if (sdata->csi != cam->csi) {
 		pr_debug("%s: csi doesn't match\n", __func__);
 		return -1;
 	}
 
 	cam->sensor = slave;
+	cam->mipi_v_channel = sdata->v_channel;
+	cam->is_mipi_cam = sdata->is_mipi;
 
 	if (cam->sensor_index < MXC_SENSOR_NUM) {
 		cam->all_sensors[cam->sensor_index] = slave;

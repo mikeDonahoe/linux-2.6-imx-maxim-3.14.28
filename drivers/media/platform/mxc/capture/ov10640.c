@@ -36,6 +36,7 @@
 #include "v4l2-int-device.h"
 #include "mxc_v4l2_capture.h"
 #include "ov10640.h"
+#include "max9286_config3.h"
 
 #define OV10640_VOLTAGE_ANALOG               2800000
 #define OV10640_VOLTAGE_DIGITAL_CORE         1500000
@@ -776,7 +777,7 @@ static int ov10640_power_on(struct device *dev)
 static s32 ov10640_write_reg(u16 reg, u8 val)
 {
 	unsigned char u8_buf[6] = {0};
-	unsigned int buf_len = 2;
+//	unsigned int buf_len = 2;
 	int retry, timeout = 20;
 
 	u8_buf[0] = reg >> 8;
@@ -835,9 +836,9 @@ static int ov10640_read_reg(u16 reg, unsigned char *val)
 static int ov10640_dump(void)
 {
 
-	int ret;
+/*	int ret;
 	uint16_t i;
-	int lval;
+//	int lval;
 
 	printk(KERN_INFO "%s\n", __func__);
 
@@ -857,6 +858,32 @@ static int ov10640_dump(void)
 //		ret = ov10640_read_reg(i, &lval);
 		//ret = i2c_smbus_read_byte_data(client, i);
 		printk("0x%02x ", ret);
+	}
+	printk(KERN_INFO"\n");
+
+	return 0;
+*/
+
+	int ret;
+	uint16_t i;
+	unsigned char value;
+
+	printk(KERN_INFO "Printing OV10640 registers\n");
+	printk(KERN_INFO "   ");
+	for( i = 0; i < 0x10; i++)
+	{
+		printk("%4x ",i);
+	}
+	
+	for( i = 0x3000; i <= 0x3800; i++)
+	{
+		if((i%16) == 0)
+		{
+			printk("\n%x: ",i/16);
+		}
+		ret = ov10640_read_reg(i, &value);
+//		ret = i2c_smbus_read_byte_data(client, i);
+		printk("0x%02x ", value);
 	}
 	printk(KERN_INFO"\n");
 
@@ -1367,6 +1394,7 @@ static int ov10640_init_mode(enum ov10640_frame_rate frame_rate,
 	s32 ArySize = 0;
 	int retval = 0;
 	int ret;
+	int lanes = 1;
 	void *mipi_csi2_info;
 	u32 mipi_reg, msec_wait4stable = 0;
 	enum ov10640_downsize_mode dn_mode, orig_dn_mode;
@@ -1395,22 +1423,22 @@ static int ov10640_init_mode(enum ov10640_frame_rate frame_rate,
 		return -1;
 	}
 
-	mipi_csi2_set_lanes(mipi_csi2_info);
+	lanes = mipi_csi2_set_lanes(mipi_csi2_info);
 
 	/*Only reset MIPI CSI2 HW at sensor initialize*/
 	if (mode == ov10640_mode_INIT)
-		mipi_csi2_reset(mipi_csi2_info);
+		mipi_csi2_reset(mipi_csi2_info, 1536 / (lanes + 1));  //Total data rate / lane numbers, Pixel clock 96MHz * 16 bits per pixel = 1536 Mbps.
 
 	if (ov10640_data.pix.pixelformat == V4L2_PIX_FMT_UYVY)
-		mipi_csi2_set_datatype(mipi_csi2_info, MIPI_DT_YUV422);
+		mipi_csi2_set_datatype(mipi_csi2_info, ov10640_data.v_channel, MIPI_DT_YUV422);
 	else if (ov10640_data.pix.pixelformat == V4L2_PIX_FMT_RGB565)
-		mipi_csi2_set_datatype(mipi_csi2_info, MIPI_DT_RGB565);
+		mipi_csi2_set_datatype(mipi_csi2_info, ov10640_data.v_channel, MIPI_DT_RGB565);
 	else
 		pr_err("currently this sensor format can not be supported!\n");
 
-	dn_mode = ov10640_mode_info_data[frame_rate][mode].dn_mode;
-	orig_dn_mode = ov10640_mode_info_data[frame_rate][orig_mode].dn_mode;
-	if (mode == ov10640_mode_INIT) {
+//	dn_mode = ov10640_mode_info_data[frame_rate][mode].dn_mode;
+//	orig_dn_mode = ov10640_mode_info_data[frame_rate][orig_mode].dn_mode;
+//	if (mode == ov10640_mode_INIT) {
 		printk("mode == ov10640_mode_INIT\n");
 		pModeSetting = ov10640_init_setting_30fps_VGA;
 		ArySize = ARRAY_SIZE(ov10640_init_setting_30fps_VGA);
@@ -1424,18 +1452,18 @@ static int ov10640_init_mode(enum ov10640_frame_rate frame_rate,
 		pModeSetting = ov10640_setting_30fps_VGA_640_480;
 		ArySize = ARRAY_SIZE(ov10640_setting_30fps_VGA_640_480);
 		retval = ov10640_download_firmware(pModeSetting, ArySize);
-	} else if ((dn_mode == SUBSAMPLING && orig_dn_mode == SCALING) ||
-			(dn_mode == SCALING && orig_dn_mode == SUBSAMPLING)) {
-		printk("dn_mode == SUBSAMPLING && orig_dn_mode == SCALING\n");
-		/* change between subsampling and scaling
-		 * go through exposure calucation */
-		retval = ov10640_change_mode_exposure_calc(frame_rate, mode);
-	} else {
-		printk("mode = something else\n");
-		/* change inside subsampling or scaling
-		 * download firmware directly */
-		retval = ov10640_change_mode_direct(frame_rate, mode);
-	}
+//	} else if ((dn_mode == SUBSAMPLING && orig_dn_mode == SCALING) ||
+//			(dn_mode == SCALING && orig_dn_mode == SUBSAMPLING)) {
+//		printk("dn_mode == SUBSAMPLING && orig_dn_mode == SCALING\n");
+//		/* change between subsampling and scaling
+//		 * go through exposure calucation */
+//		retval = ov10640_change_mode_exposure_calc(frame_rate, mode);
+//	} else {
+//		printk("mode = something else\n");
+//		/* change inside subsampling or scaling
+//		 * download firmware directly */
+//		retval = ov10640_change_mode_direct(frame_rate, mode);
+//	}
 
 	if (retval < 0)
 		goto err;
@@ -1533,18 +1561,19 @@ err:
 
 static int ioctl_g_ifparm(struct v4l2_int_device *s, struct v4l2_ifparm *p)
 {
+	struct sensor_data *sensor;
+
 	if (s == NULL) {
 		pr_err("   ERROR!! no slave device set!\n");
 		return -1;
 	}
+	sensor = s->priv;
 
 	memset(p, 0, sizeof(*p));
-	p->u.bt656.clock_curr = ov10640_data.mclk;
-	pr_debug("   clock_curr=mclk=%d\n", ov10640_data.mclk);
+	p->u.bt656.clock_curr = sensor->mclk;
+	pr_debug("   clock_curr=mclk=%d\n", sensor->mclk);
 	p->if_type = V4L2_IF_TYPE_BT656;
 	p->u.bt656.mode = V4L2_IF_TYPE_BT656_MODE_NOBT_8BIT;
-	p->u.bt656.clock_min = OV10640_XCLK_MIN;
-	p->u.bt656.clock_max = OV10640_XCLK_MAX;
 	p->u.bt656.bt_sync_correct = 1;  /* Indicate external vsync */
 
 	return 0;
@@ -1561,7 +1590,7 @@ static int ioctl_g_ifparm(struct v4l2_int_device *s, struct v4l2_ifparm *p)
 static int ioctl_s_power(struct v4l2_int_device *s, int on)
 {
 	struct sensor_data *sensor = s->priv;
-
+/*
 	if (on && !sensor->on) {
 		if (io_regulator)
 			if (regulator_enable(io_regulator) != 0)
@@ -1575,7 +1604,7 @@ static int ioctl_s_power(struct v4l2_int_device *s, int on)
 		if (analog_regulator)
 			if (regulator_enable(analog_regulator) != 0)
 				return -EIO;
-		/* Make sure power on */
+		// Make sure power on 
 		ov10640_standby(0);
 	} else if (!on && sensor->on) {
 		if (analog_regulator)
@@ -1589,7 +1618,7 @@ static int ioctl_s_power(struct v4l2_int_device *s, int on)
 
 		ov10640_standby(1);
 	}
-
+*/
 	sensor->on = on;
 
 	return 0;
@@ -1887,7 +1916,6 @@ static int ioctl_g_chip_ident(struct v4l2_int_device *s, int *id)
  */
 static int ioctl_init(struct v4l2_int_device *s)
 {
-
 	return 0;
 }
 
@@ -1901,10 +1929,9 @@ static int ioctl_init(struct v4l2_int_device *s)
 static int ioctl_enum_fmt_cap(struct v4l2_int_device *s,
 			      struct v4l2_fmtdesc *fmt)
 {
-	if (fmt->index > ov10640_mode_MAX)
-		return -EINVAL;
+	struct sensor_data *sensor = s->priv;
 
-	fmt->pixelformat = ov10640_data.pix.pixelformat;
+	fmt->pixelformat = sensor->pix.pixelformat;
 
 	return 0;
 }
@@ -1918,35 +1945,39 @@ static int ioctl_enum_fmt_cap(struct v4l2_int_device *s,
 static int ioctl_dev_init(struct v4l2_int_device *s)
 {
 	struct sensor_data *sensor = s->priv;
-	u32 tgt_xclk;	/* target xclk */
-	u32 tgt_fps;	/* target frames per secound */
+//	u32 tgt_xclk;	/* target xclk */
+//	u32 tgt_fps;	/* target frames per secound */
 	int ret;
-	enum ov10640_frame_rate frame_rate;
+//	enum ov10640_frame_rate frame_rate;
 	void *mipi_csi2_info;
 
 	printk (KERN_INFO "******* OV10640 %s\n", __func__);
 
-	ov10640_data.on = true;
+	sensor->on = true;
+//	ret = ov10640_write_reg(0x3012, 0x01); //Turn on the camera
+//	ret = ov10640_write_reg(0x3012, 0x01); //Enable external frame sync
 
 	mipi_csi2_info = mipi_csi2_get_info();
 
-	/* enable mipi csi2 */
-	if (mipi_csi2_info)
-		mipi_csi2_enable(mipi_csi2_info);
-	else {
-		printk(KERN_ERR "%s() in %s: Fail to get mipi_csi2_info!\n",
-		       __func__, __FILE__);
-		return -EPERM;
-	}
+	if (sensor->i2c_client != NULL) {
+		mipi_csi2_info = mipi_csi2_get_info();
 
-	ret = ov10640_hw_init(sensor);
+		/* enable mipi csi2 */
+		if (mipi_csi2_info)
+			mipi_csi2_enable(mipi_csi2_info);
+		else {
+			printk(KERN_ERR "%s() in %s: Fail to get mipi_csi2_info!\n",
+			       __func__, __FILE__);
+			return -EPERM;
+		}
+
+		ret = ov10640_hw_init(sensor);
+	}
 
 //	ret = ov10640_init_mode(frame_rate, ov10640_mode_INIT, ov10640_mode_INIT);
 
-//	ret = ov10640_write_reg(0x4202, 0x00); //Turn on the camera
 
 	return ret;
-
 }
 
 /*!
@@ -1957,14 +1988,17 @@ static int ioctl_dev_init(struct v4l2_int_device *s)
  */
 static int ioctl_dev_exit(struct v4l2_int_device *s)
 {
+	struct sensor_data *sensor = s->priv;
 	void *mipi_csi2_info;
 
-	mipi_csi2_info = mipi_csi2_get_info();
+	if (sensor->i2c_client != NULL) {
+		mipi_csi2_info = mipi_csi2_get_info();
 
-	/* disable mipi csi2 */
-	if (mipi_csi2_info)
-		if (mipi_csi2_get_status(mipi_csi2_info))
-			mipi_csi2_disable(mipi_csi2_info);
+		/* disable mipi csi2 */
+		if (mipi_csi2_info)
+			if (mipi_csi2_get_status(mipi_csi2_info))
+				mipi_csi2_disable(mipi_csi2_info);
+	}
 
 	return 0;
 }
@@ -2020,32 +2054,18 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 {
 	int ret = 0;
 	enum ov10640_frame_rate frame_rate;
-
 	void *mipi_csi2_info;
 	u32 mipi_reg;
 	int i, lanes;
 	u8 reg0a, sensor_addr = 0;
+	struct reg_value *pModeSetting = NULL;
+	s32 ArySize = 0;
 
-	ret = ov10640_init_mode(frame_rate, ov10640_mode_INIT, ov10640_mode_INIT);
-
-	// 5. Enable GMSL & CSI-2 - This procedure can be further moved to some ioctl
-
-	// Stream on
-//	ov10640_write_reg(0x4202, 0x00);
-//	retval = ov10640_write_reg(0x4202, 0x00);
-//		if (retval < 0)
-//			printk(KERN_INFO "Sensor not working\n");
-//		else
-//			printk(KERN_INFO "Sensor working!\n");
+//	ret = ov10640_init_mode(frame_rate, ov10640_mode_INIT, ov10640_mode_INIT);
+	int retval = 0;
 
 
-	printk("<%s> --Enabling serial links\n", __func__);
-	ret = max9271_enable_serial_links();
 
-//	printk ("--Disabling serial links\n");
-//	ret = max9271_disable_serial_links();
-
-//--------------- from qiang
 	mipi_csi2_info = mipi_csi2_get_info();
 
 	/* initial mipi dphy */
@@ -2065,6 +2085,8 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 
 	lanes = mipi_csi2_set_lanes(mipi_csi2_info);
 
+	/* Only reset MIPI CSI2 HW at sensor initialize */
+	/* 48MHz pixel clock (1280*800@30fps) * 16 bits per pixel (YUV422) = 768Mbps mipi data rate for each camera */
 	mipi_csi2_reset(mipi_csi2_info, (768 * 1) / (lanes + 1));
 
 	if (sensor->pix.pixelformat == V4L2_PIX_FMT_UYVY) {
@@ -2073,8 +2095,95 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 	} else
 		pr_err("currently this sensor format can not be supported!\n");
 
-//---------------
+//Set MAX9286 and MAX9271
 
+// Initialize camera
+
+	ret = max9271_disable_serial_links();
+
+// Initial OV10640 config
+    uint8_t *lpCamConfig = Ov10640_Table4;
+    uint32_t lConfigSize = sizeof(Ov10640_Table4);
+    for(i = 0; i < lConfigSize; i += 3) // Configure omnivision cameras
+    {
+      uint16_t lAddr = ((uint16_t)lpCamConfig[i] << 8) + lpCamConfig[i + 1];
+      if(ov10640_write_reg(lAddr, lpCamConfig[i+2]) != OV10640_DRV_SUCCESS)
+      {
+	pr_err("Register config #%u failed.\n", i);
+	break;
+      }
+      //Ov10640_RegWrite(2, *((uint16_t*)&(Ov10640_Table[i])), Ov10640_Table[i+2]);
+    }
+    pr_err("Configured camera registers.\n");
+
+
+
+//	printk("mode == ov10640_mode_INIT\n");
+//	pModeSetting = ov10640_init_setting_30fps_VGA;
+//	ArySize = ARRAY_SIZE(ov10640_init_setting_30fps_VGA);
+
+	ov10640_data.pix.width = 640;
+	ov10640_data.pix.height = 480;
+//	retval = ov10640_download_firmware(pModeSetting, ArySize);
+//	if (retval < 0) {
+//		printk(KERN_INFO "OV10640 Initial settings not loaded\n");
+//		return -1;
+//	}
+//	else
+//		printk(KERN_INFO "OV10640 Initial settings loaded\n");
+
+/*	pModeSetting = ov10640_setting_30fps_VGA_640_480;
+	ArySize = ARRAY_SIZE(ov10640_setting_30fps_VGA_640_480);
+	retval = ov10640_download_firmware(pModeSetting, ArySize);
+	if (retval < 0){
+		printk(KERN_INFO "OV10640 specific settings not loaded\n");
+		return -1;
+	}
+	else
+		printk(KERN_INFO "OV10640 specific settings loaded\n");
+*/
+	ret = ov10640_write_reg(0x308c, 0x31); //Enable external frame sync
+	ret = ov10640_write_reg(0x3012, 0x01); //Turn on the camera
+
+	ov10640_dump();
+
+	//Enable Local Auto I2C ACK
+	ret = max9271_enable_serial_links();
+
+//Final part of mipi config
+/*
+	if (mipi_csi2_info) {
+		i = 0;
+
+		// wait for mipi sensor ready
+		mipi_reg = mipi_csi2_dphy_status(mipi_csi2_info);
+		while (((mipi_reg & 0x700) != 0x300) && (i < 10)) {
+			mipi_reg = mipi_csi2_dphy_status(mipi_csi2_info);
+			i++;
+			msleep(50);
+		}
+
+		if (i >= 10) {
+			pr_err("mipi csi2 can not receive sensor clk! MIPI_CSI_PHY_STATE = 0x%x.\n", mipi_reg);
+			return -1;
+		}
+
+		i = 0;
+
+		// wait for mipi stable 
+		mipi_reg = mipi_csi2_get_error1(mipi_csi2_info);
+		while ((mipi_reg != 0x0) && (i < 10)) {
+			mipi_reg = mipi_csi2_get_error1(mipi_csi2_info);
+			i++;
+			msleep(10);
+		}
+
+		if (i >= 10) {
+			pr_err("mipi csi2 can not reveive data correctly! MIPI_CSI_ERR1 = 0x%x.\n", mipi_reg);
+			return -1;
+		}
+	}
+*/
 	return 0;
 }
 
@@ -2098,7 +2207,6 @@ static int ov10640_probe(struct i2c_client *client,
 
 	ret = max9271_initial_setup();
 	ret = max9271_disable_serial_links();
-
 
 	/* Set initial values for the sensor struct. */
 	memset(&ov10640_data, 0, sizeof(ov10640_data));
@@ -2135,8 +2243,6 @@ static int ov10640_probe(struct i2c_client *client,
 
 	clk_prepare_enable(ov10640_data.sensor_clk);
 
-
-
 //	ov10640_data.io_init = ov10640_reset;
 	ov10640_data.i2c_client = client;
 	ov10640_data.pix.pixelformat = V4L2_PIX_FMT_UYVY;
@@ -2147,6 +2253,7 @@ static int ov10640_probe(struct i2c_client *client,
 	ov10640_data.streamcap.capturemode = 0;
 	ov10640_data.streamcap.timeperframe.denominator = DEFAULT_FPS;
 	ov10640_data.streamcap.timeperframe.numerator = 1;
+	ov10640_data.is_mipi = 1;
 
 	ret = ov10640_read_reg(OV10640_CHIP_ID_HIGH_BYTE, &chip_id_high);
 	if (ret < 0 || chip_id_high != 0xa6) {
@@ -2162,16 +2269,17 @@ static int ov10640_probe(struct i2c_client *client,
 	}
 	pr_info("camera ov5640_mipi is found\n");
 
-//	ov10640_data.ipu_id = 0;
+	ov10640_data.ipu_id = 0;
 	ov10640_data.csi = 0;
-//	ov10640_data.v_channel = 0;
+	ov10640_data.v_channel = 0;
 
 	ov10640_int_device.priv = &ov10640_data;
 	ov10640_int_device.type = v4l2_int_type_slave;
 	ret = v4l2_int_device_register(&ov10640_int_device);
 
-//	clk_disable_unprepare(ov10640_data.sensor_clk);
+	pr_info("Return of v4l2_int_device_register: %d\n", ret);
 
+	clk_disable_unprepare(ov10640_data.sensor_clk);
 
 	return ret;
 }

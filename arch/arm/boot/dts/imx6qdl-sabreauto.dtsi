@@ -356,6 +356,7 @@
 		DVDD-supply = <&vgen2_reg>;  /* 1.5v*/
 		pwn-gpios = <&gpio1 19 0>;   /* active low: SD1_CLK */
 		rst-gpios = <&gpio1 20 0>;   /* active high: SD1_DAT2 */
+		ipu_id = <0>;
 		csi_id = <0>;
 		mclk = <24000000>;
 		mclk_source = <0>;
@@ -411,6 +412,7 @@
 		//pwn-gpios = <&gpio1 19 0>;   /* active low: SD1_CLK */
 		//rst-gpios = <&gpio1 20 0>;   /* active high: SD1_DAT2 */
 		//pwn-gpios = <&max7310_a 2 0>;
+		ipu_id = <0>;
 		csi_id = <0>;
 		mclk = <24000000>;
 		mclk_source = <0>;

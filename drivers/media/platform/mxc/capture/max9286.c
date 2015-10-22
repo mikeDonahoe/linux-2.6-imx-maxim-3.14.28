@@ -250,7 +250,8 @@ static int max9286_enable_csi_output(void)
 	int ret;
 
 	// Enable CSI-2 output
-	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x15, 0x0B);
+	//ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x15, 0x0B);
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x15, 0x9B);
 	msleep(10);
 
 	return 0;

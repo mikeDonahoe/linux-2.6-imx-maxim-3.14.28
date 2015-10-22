@@ -163,6 +163,8 @@ static int max9271_initial_setup(void)
 	//Link 0 serializer address
 	retval = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x0C, 0x82);
 
+//	retval = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x08, 0x09);
+
 	ret = max9271_dump(max9271_data.i2c_client);
 
 	//ret = ov10640_dump(client);
@@ -186,7 +188,7 @@ static int max9271_enable_serial_links(void)
 
 	//Enable all serial links
 	ret = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x04, 0xc3);
-	msleep(5);
+	msleep(100);
 	
 	//Poll frame sync.
 	ret = max9286_check_frame_sync();
