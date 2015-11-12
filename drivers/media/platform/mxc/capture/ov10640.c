@@ -779,6 +779,8 @@ static s32 ov10640_write_reg(u16 reg, u8 val)
 	unsigned char u8_buf[6] = {0};
 //	unsigned int buf_len = 2;
 	int retry, timeout = 20;
+	int temp1;
+	u8 temp;
 
 	u8_buf[0] = reg >> 8;
 	u8_buf[1] = reg & 0xff;
@@ -789,9 +791,13 @@ static s32 ov10640_write_reg(u16 reg, u8 val)
 			dev_dbg(&ov10640_data.i2c_client->dev,
 				"%s:write reg error: reg=0x%x, val=0x%x, retry = %d.\n", __func__, reg, val, retry);
 			msleep(10);
-			continue;
+		} else {
+			temp1 = ov10640_read_reg(reg, &temp);
+			if (temp == val)
+				break;
+			else
+				printk(KERN_INFO "Error to write OV10640: Address: 0x%x\n", reg);
 		}
-		break;
 	}
 
 	if (retry >= timeout) {
@@ -835,35 +841,6 @@ static int ov10640_read_reg(u16 reg, unsigned char *val)
  */
 static int ov10640_dump(void)
 {
-
-/*	int ret;
-	uint16_t i;
-//	int lval;
-
-	printk(KERN_INFO "%s\n", __func__);
-
-	printk(KERN_INFO "   ");
-	for( i = 0x3800; i < 0x381f; i++)
-	{
-		printk("%4x ",i);
-	}
-	
-	for( i = 0x3800; i <= 0x381f; i++)
-	{
-		if((i%16) == 0)
-		{
-			printk("\n%x: ",i/16);
-		}
-		//ret = RegRead16(client, i, &lVal);
-//		ret = ov10640_read_reg(i, &lval);
-		//ret = i2c_smbus_read_byte_data(client, i);
-		printk("0x%02x ", ret);
-	}
-	printk(KERN_INFO"\n");
-
-	return 0;
-*/
-
 	int ret;
 	uint16_t i;
 	unsigned char value;
@@ -882,7 +859,6 @@ static int ov10640_dump(void)
 			printk("\n%x: ",i/16);
 		}
 		ret = ov10640_read_reg(i, &value);
-//		ret = i2c_smbus_read_byte_data(client, i);
 		printk("0x%02x ", value);
 	}
 	printk(KERN_INFO"\n");
@@ -2101,9 +2077,12 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 
 	ret = max9271_disable_serial_links();
 
+	ret = ov10640_write_reg(0x3013, 0x01); //Software reset
+	msleep(10);
+
 // Initial OV10640 config
-    uint8_t *lpCamConfig = Ov10640_Table4;
-    uint32_t lConfigSize = sizeof(Ov10640_Table4);
+    uint8_t *lpCamConfig = Ov10640_Table5;
+    uint32_t lConfigSize = sizeof(Ov10640_Table5);
     for(i = 0; i < lConfigSize; i += 3) // Configure omnivision cameras
     {
       uint16_t lAddr = ((uint16_t)lpCamConfig[i] << 8) + lpCamConfig[i + 1];
@@ -2142,7 +2121,21 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 	else
 		printk(KERN_INFO "OV10640 specific settings loaded\n");
 */
-	ret = ov10640_write_reg(0x308c, 0x31); //Enable external frame sync
+
+
+
+//plls
+/*	ret = ov10640_write_reg(0x3000, 0x03); //03
+	ret = ov10640_write_reg(0x3001, 0x62); //51
+	ret = ov10640_write_reg(0x3002, 0x0f); //06
+	ret = ov10640_write_reg(0x3004, 0x03); //03
+	ret = ov10640_write_reg(0x3005, 0x62); //51
+	ret = ov10640_write_reg(0x3006, 0x0f); //06
+*/
+//other regs
+//	ret = ov10640_write_reg(0x308c, 0x31); //Enable external frame sync
+//	ret = ov10640_write_reg(0x3119, 0x0c); //output as DVP, 12 comb
+//	ret = ov10640_write_reg(0x3023, 0x00); //Driver strength
 	ret = ov10640_write_reg(0x3012, 0x01); //Turn on the camera
 
 	ov10640_dump();
