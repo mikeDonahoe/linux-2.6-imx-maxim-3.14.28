@@ -1370,7 +1370,7 @@ static int ov10640_init_mode(enum ov10640_frame_rate frame_rate,
 	s32 ArySize = 0;
 	int retval = 0;
 	int ret;
-	int lanes = 1;
+	int lanes = 4;
 	void *mipi_csi2_info;
 	u32 mipi_reg, msec_wait4stable = 0;
 	enum ov10640_downsize_mode dn_mode, orig_dn_mode;
@@ -2081,6 +2081,7 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 	msleep(10);
 
 // Initial OV10640 config
+
     uint8_t *lpCamConfig = Ov10640_Table5;
     uint32_t lConfigSize = sizeof(Ov10640_Table5);
     for(i = 0; i < lConfigSize; i += 3) // Configure omnivision cameras
@@ -2126,25 +2127,25 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 
 //plls
 /*	ret = ov10640_write_reg(0x3000, 0x03); //03
-	ret = ov10640_write_reg(0x3001, 0x62); //51
+	ret = ov10640_write_reg(0x3001, 0x10); //51
 	ret = ov10640_write_reg(0x3002, 0x0f); //06
 	ret = ov10640_write_reg(0x3004, 0x03); //03
-	ret = ov10640_write_reg(0x3005, 0x62); //51
+	ret = ov10640_write_reg(0x3005, 0x10); //51
 	ret = ov10640_write_reg(0x3006, 0x0f); //06
 */
 //other regs
 //	ret = ov10640_write_reg(0x308c, 0x31); //Enable external frame sync
 //	ret = ov10640_write_reg(0x3119, 0x0c); //output as DVP, 12 comb
-//	ret = ov10640_write_reg(0x3023, 0x00); //Driver strength
+	ret = ov10640_write_reg(0x3023, 0x0d); //Driver strength
 	ret = ov10640_write_reg(0x3012, 0x01); //Turn on the camera
 
-	ov10640_dump();
+//	ov10640_dump();
 
 	//Enable Local Auto I2C ACK
 	ret = max9271_enable_serial_links();
 
 //Final part of mipi config
-/*
+
 	if (mipi_csi2_info) {
 		i = 0;
 
@@ -2176,7 +2177,7 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 			return -1;
 		}
 	}
-*/
+
 	return 0;
 }
 
@@ -2260,7 +2261,7 @@ static int ov10640_probe(struct i2c_client *client,
 		clk_disable_unprepare(ov10640_data.sensor_clk);
 		return -ENODEV;
 	}
-	pr_info("camera ov5640_mipi is found\n");
+	pr_info("camera ov10640_mipi is found\n");
 
 	ov10640_data.ipu_id = 0;
 	ov10640_data.csi = 0;

@@ -150,7 +150,7 @@ static int max9286_initial_setup(void)
 	//Enable CSI-2 DBL
 	//Enable GMSL DBL for Rawx2
 	//Enable RAW8 data type
-	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x12, 0xf5);
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x12, 0xe5);
 
 	//Enable frame sync
 	//Enable semi-auto frame sync
@@ -162,8 +162,8 @@ static int max9286_initial_setup(void)
 	//to lock will be master link with auto select
 	//Disable internal VSYNC generation. Use free running
 	//VSYNC from image sensor
-	//Enable GMSL links
-	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x00, 0xef);
+	//Enable GMSL links ////e1
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x00, 0xe1);
 
 	return 0;
 
@@ -201,7 +201,10 @@ static int max9286_increase_rev_amplitude(void)
 {
 	int ret;
 	//Increase reverse amplitude from 100mV to 170mV
-	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x3B, 0x1E);
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x3B, 0x19);
+
+	//max9286_write_reg(0x0D, 0xF7);
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x0D, 0xF7);
 
 	msleep(2);
 

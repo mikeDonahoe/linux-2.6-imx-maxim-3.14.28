@@ -122,7 +122,7 @@ static int max9271_initial_setup(void)
 
 	msleep(5);
 
-	//Enable high threshould for reverse channel input
+	//Enable high threshold for reverse channel input
 	retval = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x08, 0x01);
 
 	ret = max9286_increase_rev_amplitude();
@@ -149,7 +149,7 @@ static int max9271_initial_setup(void)
 	//Enable DBL
 	//Set Edge Select 1 = Rise / 0 = Fall
 	//Enable HS/VS encoding
-	retval = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x07, 0x94);
+	retval = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x07, 0x14);
 
 	//Unique Link 0 image sensor slave address
 	retval = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x09, 0x62);
@@ -187,11 +187,11 @@ static int max9271_enable_serial_links(void)
 	int ret;
 
 	//Enable all serial links
-	ret = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x04, 0xc3);
+	ret = i2c_smbus_write_byte_data(max9271_data.i2c_client, 0x04, 0x83);
 	msleep(100);
 	
 	//Poll frame sync.
-	ret = max9286_check_frame_sync();
+	//ret = max9286_check_frame_sync();
 
 	//Enable CSI-2 output
 	ret = max9286_enable_csi_output();
