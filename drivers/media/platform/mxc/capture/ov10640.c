@@ -2063,13 +2063,13 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 
 	/* Only reset MIPI CSI2 HW at sensor initialize */
 	/* 48MHz pixel clock (1280*800@30fps) * 16 bits per pixel (YUV422) = 768Mbps mipi data rate for each camera */
-	mipi_csi2_reset(mipi_csi2_info, (768 * 1) / (lanes + 1));
+	mipi_csi2_reset(mipi_csi2_info, 300);//(mipi_csi2_info, (768 * 1) / (lanes + 1));
 
-	if (sensor->pix.pixelformat == V4L2_PIX_FMT_UYVY) {
-		for (i=0; i<1; i++)
-			mipi_csi2_set_datatype(mipi_csi2_info, i, MIPI_DT_YUV422);
-	} else
-		pr_err("currently this sensor format can not be supported!\n");
+//	if (sensor->pix.pixelformat == V4L2_PIX_FMT_UYVY) {
+//		for (i=0; i<1; i++)
+			mipi_csi2_set_datatype(mipi_csi2_info, i, MIPI_DT_RAW12);
+//	} else
+//		pr_err("currently this sensor format can not be supported!\n");
 
 //Set MAX9286 and MAX9271
 
@@ -2149,13 +2149,14 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 	if (mipi_csi2_info) {
 		i = 0;
 
-		// wait for mipi sensor ready
+		/* wait for mipi sensor ready */
 		mipi_reg = mipi_csi2_dphy_status(mipi_csi2_info);
-		while (((mipi_reg & 0x700) != 0x300) && (i < 10)) {
+		while ((mipi_reg == 0x200) && (i < 10)) {
 			mipi_reg = mipi_csi2_dphy_status(mipi_csi2_info);
 			i++;
-			msleep(50);
+			msleep(10);
 		}
+
 
 		if (i >= 10) {
 			pr_err("mipi csi2 can not receive sensor clk! MIPI_CSI_PHY_STATE = 0x%x.\n", mipi_reg);
@@ -2239,7 +2240,7 @@ static int ov10640_probe(struct i2c_client *client,
 
 //	ov10640_data.io_init = ov10640_reset;
 	ov10640_data.i2c_client = client;
-	ov10640_data.pix.pixelformat = V4L2_PIX_FMT_UYVY;
+	ov10640_data.pix.pixelformat = V4L2_PIX_FMT_SBGGR12; // V4L2_PIX_FMT_UYVY;
 	ov10640_data.pix.width = 640;
 	ov10640_data.pix.height = 480;
 	ov10640_data.streamcap.capability = V4L2_MODE_HIGHQUALITY |
@@ -2263,9 +2264,9 @@ static int ov10640_probe(struct i2c_client *client,
 	}
 	pr_info("camera ov10640_mipi is found\n");
 
-	ov10640_data.ipu_id = 0;
-	ov10640_data.csi = 0;
-	ov10640_data.v_channel = 0;
+//	ov10640_data.ipu_id = 0;
+//	ov10640_data.csi = 0;
+//	ov10640_data.v_channel = 0;
 
 	ov10640_int_device.priv = &ov10640_data;
 	ov10640_int_device.type = v4l2_int_type_slave;
@@ -2273,7 +2274,7 @@ static int ov10640_probe(struct i2c_client *client,
 
 	pr_info("Return of v4l2_int_device_register: %d\n", ret);
 
-	clk_disable_unprepare(ov10640_data.sensor_clk);
+//	clk_disable_unprepare(ov10640_data.sensor_clk);
 
 	return ret;
 }
