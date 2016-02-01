@@ -621,12 +621,26 @@
 	};
 };
 
-&mipi_csi {
+/*&mipi_csi {
 	status = "okay";
 	ipu_id = <0>;
 	csi_id = <0>;
 	v_channel = <0>;
 	lanes = <2>;
+};
+*/
+
+&mipi_csi {
+	status = "okay";
+	lanes = <4>;
+
+	mipi-csi2-channel@0 {
+		ipu_id = <0>;
+		csi_id = <0>;
+		v_channel = <0>;
+		status = "okay";
+	};
+
 };
 
 &mlb {

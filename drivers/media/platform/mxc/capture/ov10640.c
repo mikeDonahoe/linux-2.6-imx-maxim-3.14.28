@@ -852,7 +852,7 @@ static int ov10640_dump(void)
 		printk("%4x ",i);
 	}
 	
-	for( i = 0x3000; i <= 0x3800; i++)
+	for( i = 0x3000; i <= 0x5000; i++)
 	{
 		if((i%16) == 0)
 		{
@@ -1549,7 +1549,7 @@ static int ioctl_g_ifparm(struct v4l2_int_device *s, struct v4l2_ifparm *p)
 	p->u.bt656.clock_curr = sensor->mclk;
 	pr_debug("   clock_curr=mclk=%d\n", sensor->mclk);
 	p->if_type = V4L2_IF_TYPE_BT656;
-	p->u.bt656.mode = V4L2_IF_TYPE_BT656_MODE_NOBT_8BIT;
+	p->u.bt656.mode = V4L2_IF_TYPE_BT656_MODE_NOBT_12BIT;
 	p->u.bt656.bt_sync_correct = 1;  /* Indicate external vsync */
 
 	return 0;
@@ -2139,7 +2139,7 @@ static int ov10640_hw_init(struct sensor_data *sensor)
 	ret = ov10640_write_reg(0x3023, 0x0d); //Driver strength
 	ret = ov10640_write_reg(0x3012, 0x01); //Turn on the camera
 
-//	ov10640_dump();
+	//ov10640_dump();
 
 	//Enable Local Auto I2C ACK
 	ret = max9271_enable_serial_links();
@@ -2246,7 +2246,7 @@ static int ov10640_probe(struct i2c_client *client,
 	ov10640_data.streamcap.capability = V4L2_MODE_HIGHQUALITY |
 					   V4L2_CAP_TIMEPERFRAME;
 	ov10640_data.streamcap.capturemode = 0;
-	ov10640_data.streamcap.timeperframe.denominator = DEFAULT_FPS;
+	ov10640_data.streamcap.timeperframe.denominator = 30; //DEFAULT_FPS;
 	ov10640_data.streamcap.timeperframe.numerator = 1;
 	ov10640_data.is_mipi = 1;
 
@@ -2264,9 +2264,9 @@ static int ov10640_probe(struct i2c_client *client,
 	}
 	pr_info("camera ov10640_mipi is found\n");
 
-//	ov10640_data.ipu_id = 0;
-//	ov10640_data.csi = 0;
-//	ov10640_data.v_channel = 0;
+	ov10640_data.ipu_id = 0;
+	ov10640_data.csi = 0;
+	ov10640_data.v_channel = 0;
 
 	ov10640_int_device.priv = &ov10640_data;
 	ov10640_int_device.type = v4l2_int_type_slave;

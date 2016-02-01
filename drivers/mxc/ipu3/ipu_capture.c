@@ -18,6 +18,7 @@
  *
  * @ingroup IPU
  */
+#define DEBUG
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -98,8 +99,10 @@ ipu_csi_init_interface(struct ipu_soc *ipu, uint16_t width, uint16_t height,
 	case IPU_PIX_FMT_BGR24:
 		cfg_param.data_fmt = CSI_SENS_CONF_DATA_FMT_RGB_YUV444;
 		break;
+	case V4L2_PIX_FMT_SBGGR12:
 	case IPU_PIX_FMT_GENERIC:
 	case IPU_PIX_FMT_GENERIC_16:
+	case IPU_PIX_FMT_GENERIC_32:
 		cfg_param.data_fmt = CSI_SENS_CONF_DATA_FMT_BAYER;
 		break;
 	case IPU_PIX_FMT_RGB565:
@@ -803,6 +806,10 @@ void _ipu_csi_wait4eof(struct ipu_soc *ipu, ipu_channel_t channel)
 		dev_err(ipu->dev, "Not a CSI channel\n");
 		return;
 	}
+
+	dev_dbg(ipu->dev, "CSI IRQ channel - 0x%x\n", channel);
+
+	printk (KERN_INFO "Enabling IPU IRQ 0x%x", irq);
 
 	init_completion(&ipu->csi_comp);
 	ret = ipu_request_irq(ipu, irq, csi_irq_handler, 0, NULL, ipu);

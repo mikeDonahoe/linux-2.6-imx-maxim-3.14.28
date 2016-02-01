@@ -129,8 +129,14 @@ static int prp_enc_setup(cam_data *cam)
 	} else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB32) {
 		enc.csi_prp_enc_mem.out_pixel_fmt = IPU_PIX_FMT_RGB32;
 		pr_info("RGB32\n");
+	} else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_SBGGR8) {
+		enc.csi_prp_enc_mem.out_pixel_fmt = IPU_PIX_FMT_GENERIC;
+		pr_info("IPU_PIX_FMT_GENERIC\n");
+	} else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_SBGGR12) {
+		enc.csi_prp_enc_mem.out_pixel_fmt = IPU_PIX_FMT_GENERIC;
+		pr_info("IPU_PIX_FMT_GENERIC\n");
 	} else {
-		printk(KERN_ERR "format not supported\n");
+		printk(KERN_ERR "format not supported - prp_enc_setup\n");
 		return -EINVAL;
 	}
 

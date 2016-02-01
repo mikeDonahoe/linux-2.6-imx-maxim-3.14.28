@@ -18,6 +18,7 @@
  *
  * @ingroup MXC_V4L2_CAPTURE
  */
+#define DEBUG 1
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -128,6 +129,26 @@ static struct v4l2_output mxc_capture_outputs[MXC_V4L2_CAPTURE_NUM_OUTPUTS] = {
 static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
 	{
 	 .index = 0,
+	 .name = "CSI MEM",
+	 .type = V4L2_INPUT_TYPE_CAMERA,
+	 .audioset = 0,
+	 .tuner = 0,
+	 .std = V4L2_STD_UNKNOWN,
+	 .status = V4L2_IN_ST_NO_POWER,
+	 },
+/*	 {
+	 .index = 1,
+	 .name = "CSI IC MEM",
+	 .type = V4L2_INPUT_TYPE_CAMERA,
+	 .audioset = 0,
+	 .tuner = 0,
+	 .std = V4L2_STD_UNKNOWN,
+	 .status = 0,
+	 },
+*/
+#if 0	// original
+	{
+	 .index = 0,
 	 .name = "CSI IC MEM",
 	 .type = V4L2_INPUT_TYPE_CAMERA,
 	 .audioset = 0,
@@ -144,6 +165,7 @@ static struct v4l2_input mxc_capture_inputs[MXC_V4L2_CAPTURE_NUM_INPUTS] = {
 	 .std = V4L2_STD_UNKNOWN,
 	 .status = V4L2_IN_ST_NO_POWER,
 	 },
+#endif // 0
 };
 
 /*! List of TV input video formats supported. The video formats is corresponding
@@ -391,7 +413,10 @@ static inline int valid_mode(u32 palette)
 		(palette == V4L2_PIX_FMT_YUYV) ||
 		(palette == V4L2_PIX_FMT_YUV420) ||
 		(palette == V4L2_PIX_FMT_YVU420) ||
-		(palette == V4L2_PIX_FMT_NV12));
+		(palette == V4L2_PIX_FMT_NV12) ||
+		(palette == V4L2_PIX_FMT_SBGGR8)||
+		(palette == V4L2_PIX_FMT_SBGGR12)||
+		(palette == V4L2_PIX_FMT_GREY));
 }
 
 /*!
@@ -916,6 +941,21 @@ static int mxc_v4l2_s_fmt(cam_data *cam, struct v4l2_format *f)
 			size = f->fmt.pix.width * f->fmt.pix.height * 3 / 2;
 			bytesperline = f->fmt.pix.width;
 			break;
+		case V4L2_PIX_FMT_SBGGR8:
+			size = f->fmt.pix.width * f->fmt.pix.height;
+			bytesperline = f->fmt.pix.width;
+			pr_err("   type=V4L2_PIX_FMT_SBGGR8\n");
+			break;
+		case V4L2_PIX_FMT_SBGGR12:
+			size = f->fmt.pix.width * f->fmt.pix.height *2;
+			bytesperline = f->fmt.pix.width *2;
+			pr_err("   type=V4L2_PIX_FMT_SBGGR12\n");
+			break;
+		case V4L2_PIX_FMT_GREY:
+			size = f->fmt.pix.width * f->fmt.pix.height ;
+			bytesperline = f->fmt.pix.width;
+			pr_err("   type=V4L2_PIX_FMT_GREY\n");
+			break;
 		default:
 			break;
 		}
@@ -1382,7 +1422,18 @@ static int mxc_v4l2_s_param(cam_data *cam, struct v4l2_streamparm *parm)
 	pr_debug("   g_fmt_cap returns widthxheight of input as %d x %d\n",
 			cam_fmt.fmt.pix.width, cam_fmt.fmt.pix.height);
 
-	csi_param.data_fmt = cam_fmt.fmt.pix.pixelformat;
+//	csi_param.data_fmt = cam_fmt.fmt.pix.pixelformat;
+	if(cam_fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_SBGGR12)
+	{
+	  csi_param.data_fmt = IPU_PIX_FMT_GENERIC;
+	  cam_fmt.fmt.pix.pixelformat = IPU_PIX_FMT_GENERIC;
+	  pr_err("IPU_PIX_FMT_GENERIC set\n");
+	}
+	else
+	{
+	  pr_err("IPU_PIX_FMT_GENERIC NOT set\n");
+	  csi_param.data_fmt = cam_fmt.fmt.pix.pixelformat;
+	}
 
 	cam->crop_bounds.top = cam->crop_bounds.left = 0;
 	cam->crop_bounds.width = cam_fmt.fmt.pix.width;
@@ -1618,11 +1669,13 @@ static int mxc_v4l_open(struct file *file)
 		if (strcmp(mxc_capture_inputs[cam->current_input].name,
 			   "CSI MEM") == 0) {
 #if defined(CONFIG_MXC_IPU_CSI_ENC) || defined(CONFIG_MXC_IPU_CSI_ENC_MODULE)
+			printk("!! CSI MEM path\n");
 			err = csi_enc_select(cam);
 #endif
 		} else if (strcmp(mxc_capture_inputs[cam->current_input].name,
 				  "CSI IC MEM") == 0) {
 #if defined(CONFIG_MXC_IPU_PRP_ENC) || defined(CONFIG_MXC_IPU_PRP_ENC_MODULE)
+			printk("!! CSI IC MEM path\n");
 			err = prp_enc_select(cam);
 #endif
 		}
@@ -1695,7 +1748,18 @@ static int mxc_v4l_open(struct file *file)
 			__func__,
 			cam->crop_current.width, cam->crop_current.height);
 
-		csi_param.data_fmt = cam_fmt.fmt.pix.pixelformat;
+//		csi_param.data_fmt = cam_fmt.fmt.pix.pixelformat;
+		if(cam_fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_SBGGR12)
+		{
+		  csi_param.data_fmt = IPU_PIX_FMT_GENERIC;
+		  cam_fmt.fmt.pix.pixelformat = IPU_PIX_FMT_GENERIC;
+		  pr_err("IPU_PIX_FMT_GENERIC set\n");
+		}
+		else
+		{
+		  pr_err("IPU_PIX_FMT_GENERIC NOT set\n");
+		  csi_param.data_fmt = cam_fmt.fmt.pix.pixelformat;
+		}
 		pr_debug("On Open: Input to ipu size is %d x %d\n",
 				cam_fmt.fmt.pix.width, cam_fmt.fmt.pix.height);
 		ipu_csi_set_window_size(cam->ipu, cam->crop_current.width,
@@ -2729,7 +2793,7 @@ static int init_camera_struct(cam_data *cam, struct platform_device *pdev)
 	cam->v2f.fmt.pix.bytesperline = 288 * 3 / 2;
 	cam->v2f.fmt.pix.width = 288;
 	cam->v2f.fmt.pix.height = 352;
-	cam->v2f.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+	cam->v2f.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR12; //V4L2_PIX_FMT_YUV420;
 	cam->win.w.width = 160;
 	cam->win.w.height = 160;
 	cam->win.w.left = 0;

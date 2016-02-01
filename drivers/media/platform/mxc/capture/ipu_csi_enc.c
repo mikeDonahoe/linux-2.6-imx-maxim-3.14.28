@@ -132,8 +132,14 @@ static int csi_enc_setup(cam_data *cam)
 		pixel_fmt = IPU_PIX_FMT_BGR32;
 	else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB32)
 		pixel_fmt = IPU_PIX_FMT_RGB32;
+	else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_SBGGR8)
+		pixel_fmt = IPU_PIX_FMT_GENERIC;
+	else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_SBGGR12)
+		pixel_fmt = IPU_PIX_FMT_GENERIC;
+	else if (cam->v2f.fmt.pix.pixelformat == V4L2_PIX_FMT_GREY)
+		pixel_fmt = IPU_PIX_FMT_GREY;
 	else {
-		printk(KERN_ERR "format not supported\n");
+		printk(KERN_ERR "format not supported - csi_enc_setup\n");
 		return -EINVAL;
 	}
 
@@ -144,7 +150,7 @@ static int csi_enc_setup(cam_data *cam)
 		if (mipi_csi2_get_status(mipi_csi2_info) && cam->is_mipi_cam) {
 			ipu_id = mipi_csi2_get_bind_ipu(mipi_csi2_info, cam->mipi_v_channel);
 			csi_id = mipi_csi2_get_bind_csi(mipi_csi2_info, cam->mipi_v_channel);
-
+			printk(KERN_INFO "!! csi_enc_setup, ipu_id 0x%x, csi_id 0x%x\n", ipu_id, csi_id);
 //			if (cam->ipu == ipu_get_soc(ipu_id)
 //				&& cam->csi == csi_id) {
 				params.csi_mem.mipi_en = true;
@@ -159,6 +165,7 @@ static int csi_enc_setup(cam_data *cam)
 //				params.csi_mem.mipi_id = 0;
 //			}
 		} else {
+			printk(KERN_INFO "!! csi_enc_setup, not a MIPI cam\n");
 			params.csi_mem.mipi_en = false;
 			params.csi_mem.mipi_vc = 0;
 			params.csi_mem.mipi_id = 0;
@@ -249,10 +256,14 @@ static int csi_enc_enabling_tasks(void *private)
 	uint32_t irq;
 	CAMERA_TRACE("IPU:In csi_enc_enabling_tasks\n");
 
+	printk(KERN_INFO "IPU:In csi_enc_enabling_tasks\n");
+
 	if (cam->csi == 1)
 		irq = IPU_IRQ_CSI1_OUT_EOF;
 	else
 		irq = IPU_IRQ_CSI0_OUT_EOF;
+
+	printk(KERN_INFO "CSI irq 0x%x\n", irq);
 
 	cam->dummy_frame.vaddress = dma_alloc_coherent(0,
 			       PAGE_ALIGN(cam->v2f.fmt.pix.sizeimage),

@@ -18,6 +18,9 @@
  *
  * @ingroup IPU
  */
+
+#define DEBUG
+
 #include <linux/busfreq-imx6.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
@@ -920,6 +923,8 @@ int32_t ipu_init_channel(struct ipu_soc *ipu, ipu_channel_t channel, ipu_channel
 	}
 
 	ipu->channel_init_mask |= 1L << IPU_CHAN_ID(channel);
+
+	printk (KERN_INFO "--- Writing to IPU conf: 0x%x", ipu_conf);
 
 	ipu_cm_write(ipu, ipu_conf, IPU_CONF);
 
@@ -2482,6 +2487,8 @@ int32_t ipu_enable_csi(struct ipu_soc *ipu, uint32_t csi)
 {
 	uint32_t reg;
 
+	printk (KERN_INFO "!!! ipu_enable_csi 0x%x\n", csi);
+
 	if (csi > 1) {
 		dev_err(ipu->dev, "Wrong csi num_%d\n", csi);
 		return -EINVAL;
@@ -2493,10 +2500,14 @@ int32_t ipu_enable_csi(struct ipu_soc *ipu, uint32_t csi)
 
 	if (ipu->csi_use_count[csi] == 1) {
 		reg = ipu_cm_read(ipu, IPU_CONF);
-		if (csi == 0)
+		if (csi == 0) {
+			printk (KERN_INFO "!!! enabling CSI n 0x%x\n", csi);
 			ipu_cm_write(ipu, reg | IPU_CONF_CSI0_EN, IPU_CONF);
-		else
+		}
+		else {
+			printk (KERN_INFO "!!! enabling CSI n 0x%x\n", csi);
 			ipu_cm_write(ipu, reg | IPU_CONF_CSI1_EN, IPU_CONF);
+		}
 	}
 	mutex_unlock(&ipu->mutex_lock);
 	_ipu_put(ipu);
@@ -2552,6 +2563,9 @@ static irqreturn_t ipu_sync_irq_handler(int irq, void *desc)
 		int_stat = ipu_cm_read(ipu, IPU_INT_STAT(int_reg[i]));
 		int_ctrl = ipu_cm_read(ipu, IPU_INT_CTRL(int_reg[i]));
 		int_stat &= int_ctrl;
+			printk(KERN_INFO 
+			"IPU sync irq - IPU_INT_STAT_%d = 0x%08X\n",
+			int_reg[i], int_stat);
 		ipu_cm_write(ipu, int_stat, IPU_INT_STAT(int_reg[i]));
 		while ((line = ffs(int_stat)) != 0) {
 			bit = --line;

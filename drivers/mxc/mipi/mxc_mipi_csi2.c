@@ -16,6 +16,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#define DEBUG 1
+
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/interrupt.h>
@@ -400,6 +402,7 @@ int mipi_csi2_get_bind_ipu(struct mipi_csi2_info *info, unsigned int v_channel)
 
 	_mipi_csi2_lock(info);
 	ipu_id = info->mipi_chan[v_channel].ipu_id;
+	printk (KERN_INFO "---mipi_csi2_get_bind_ipu, ipu_id = 0x%x\n", ipu_id);
 	_mipi_csi2_unlock(info);
 
 	return ipu_id;

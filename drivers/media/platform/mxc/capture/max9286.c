@@ -150,7 +150,7 @@ static int max9286_initial_setup(void)
 	//Enable CSI-2 DBL
 	//Enable GMSL DBL for Rawx2
 	//Enable RAW8 data type
-	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x12, 0x77); // 0xe5);
+	ret = i2c_smbus_write_byte_data(max9286_data.i2c_client, 0x12, 0xf7); //0x77 0xe5);
 
 	//Enable frame sync
 	//Enable semi-auto frame sync

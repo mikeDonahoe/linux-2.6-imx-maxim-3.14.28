@@ -2039,7 +2039,7 @@ static int ov5640_probe(struct i2c_client *client,
 
 	ov5640_data.io_init = ov5640_reset;
 	ov5640_data.i2c_client = client;
-	ov5640_data.pix.pixelformat = V4L2_PIX_FMT_UYVY;
+	ov5640_data.pix.pixelformat = V4L2_PIX_FMT_SBGGR12;
 	ov5640_data.pix.width = 640;
 	ov5640_data.pix.height = 480;
 	ov5640_data.streamcap.capability = V4L2_MODE_HIGHQUALITY |
